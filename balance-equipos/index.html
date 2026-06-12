@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Balance de Equipos | H-CORE</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Tipografía de horror para el logo -->
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
+    <style>
+        /* ========== VARIABLES CLARO/OSCURO ========== */
+        :root {
+            --bg-body: linear-gradient(135deg, #e9eff7 0%, #dbe4ee 100%);
+            --card-bg: rgba(255, 255, 255, 0.98);
+            --text-primary: #1e2b3c;
+            --text-secondary: #2c4c6e;
+            --border-light: rgba(0,0,0,0.05);
+            --input-bg: #fefefe;
+            --input-border: #cbd5e1;
+            --jugador-bg: #ffffff;
+            --jugador-border: #2c7da0;
+            --incompleto-bg: #fff8f5;
+            --incompleto-border: #e76f51;
+            --pos-label-bg: #f1f5f9;
+            --equipo-bg: #f8fafc;
+            --promedio-bg: #ffffff;
+            --footer-color: #2c5a7a;
+            --btn-todo-bg: #2a9d8f;
+        }
+        body.dark {
+            --bg-body: linear-gradient(135deg, #0a0f1a 0%, #101824 100%);
+            --card-bg: #1e2a32;
+            --text-primary: #eef2ff;
+            --text-secondary: #a3c2e0;
+            --border-light: rgba(255,255,255,0.1);
+            --input-bg: #2d3e4a;
+            --input-border: #4a6272;
+            --jugador-bg: #25323e;
+            --jugador-border: #4f9fbf;
+            --incompleto-bg: #36241f;
+            --incompleto-border: #e76f51;
+            --pos-label-bg: #2d3e4a;
+            --equipo-bg: #1e2a32;
+            --promedio-bg: #2d3e4a;
+            --footer-color: #7fa5c2;
+            --btn-todo-bg: #2a9d8f;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: var(--bg-body);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            transition: background 0.2s, color 0.2s;
+            color: var(--text-primary);
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .theme-toggle {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+        }
+        .theme-btn {
+            background: var(--card-bg);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--text-primary);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(2px);
+            border-radius: 2rem;
+            padding: 1.8rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s;
+            border: 1px solid var(--border-light);
+        }
+        h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(120deg, var(--text-secondary), #4f9fbf);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-left: 5px solid #2c7da0;
+            padding-left: 1rem;
+        }
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1.5rem 0 1rem;
+        }
+        /* Botones generales */
+        button {
+            background: #2c7da0;
+            border: none;
+            padding: 0.7rem 1.4rem;
+            border-radius: 3rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        button i { font-size: 0.9rem; }
+        button:hover { background: #1f5e7e; transform: scale(0.97); }
+        
+        /* Botones secundarios (retroceso, editar) más pequeños */
+        .btn-secondary, .btn-back, .btn-edit {
+            background: #5f7f9e;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+        .btn-success { background: #2a9d8f; }
+        .btn-todo { background: var(--btn-todo-bg); padding: 0.3rem 0.8rem; font-size: 0.75rem; }
+        
+        textarea, input {
+            width: 100%;
+            padding: 0.9rem 1.2rem;
+            border-radius: 1.5rem;
+            border: 1px solid var(--input-border);
+            font-size: 1rem;
+            background: var(--input-bg);
+            color: var(--text-primary);
+        }
+        .jugadores-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            margin: 1.5rem 0;
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+        .jugador-card {
+            background: var(--jugador-bg);
+            border-radius: 1.5rem;
+            padding: 1.2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 6px solid var(--jugador-border);
+            transition: all 0.2s;
+        }
+        .jugador-card.incompleto {
+            border-left-color: var(--incompleto-border);
+            background: var(--incompleto-bg);
+            box-shadow: 0 0 0 2px var(--incompleto-border);
+        }
+        .estrellas-5 {
+            display: flex;
+            gap: 0.5rem;
+            margin: 0.8rem 0;
+        }
+        .estrella-item {
+            font-size: 2rem;
+            cursor: pointer;
+            color: #d4d4d4;
+            transition: 0.05s linear;
+        }
+        .estrella-item.activa { color: #f4b942; text-shadow: 0 0 3px #ffb347; }
+        .posiciones-opciones {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 0.6rem;
+        }
+        .posiciones-opciones label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--pos-label-bg);
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .equipos-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+        .equipo-card {
+            flex: 1;
+            background: var(--equipo-bg);
+            border-radius: 1.8rem;
+            padding: 1.2rem;
+        }
+        .promedio-equipo {
+            text-align: center;
+            background: var(--promedio-bg);
+            padding: 0.5rem;
+            border-radius: 2rem;
+            margin: 1rem 0;
+        }
+        .semaforo {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        .verde { background: #2e7d32; }
+        .amarillo { background: #f9a825; }
+        .rojo { background: #d32f2f; }
+        
+        /* ========== FOOTER CON LOGO NEON TERROR ========== */
+        .footer-hcore {
+            text-align: center;
+            margin-top: 2rem;
+            font-family: 'Creepster', cursive;
+            font-size: 2rem;
+            letter-spacing: 0.1em;
+            color: #FFFFFF;  /* Blanco puro para el texto base */
+            text-transform: uppercase;
+            user-select: none;
+            /* Sombras iniciales (neón suave) */
+            text-shadow: 
+                0 0 2px #FFFFFF,
+                0 0 5px #00F5D4,
+                0 0 10px #00FFFF,
+                0 0 18px #70ECE4;
+            /* Animación errática tipo "luz mala" */
+            animation: flickerTerror 2.2s infinite steps(1, end);
+        }
+        
+        /* Keyframes con parpadeo caótico */
+        @keyframes flickerTerror {
+            0% { text-shadow: 0 0 3px #fff, 0 0 6px #00F5D4, 0 0 12px #00FFFF, 0 0 22px #70ECE4; opacity: 1; }
+            5% { text-shadow: 0 0 1px #fff, 0 0 3px #00F5D4, 0 0 6px #70ECE4; opacity: 0.9; }
+            10% { text-shadow: none; opacity: 0.3; }
+            12% { text-shadow: 0 0 8px #fff, 0 0 18px #00FFFF, 0 0 35px #00F5D4, 0 0 50px #70ECE4; opacity: 1; }
+            18% { text-shadow: 0 0 2px #fff, 0 0 5px #00F5D4; opacity: 0.7; }
+            20% { text-shadow: 0 0 12px #fff, 0 0 25px #00FFFF, 0 0 40px #00F5D4; opacity: 1; }
+            28% { text-shadow: none; opacity: 0.2; }
+            32% { text-shadow: 0 0 4px #fff, 0 0 10px #70ECE4, 0 0 15px #00FFFF; opacity: 0.9; }
+            40% { text-shadow: 0 0 1px #fff, 0 0 3px #00F5D4; opacity: 0.6; }
+            44% { text-shadow: 0 0 10px #fff, 0 0 20px #00FFFF, 0 0 45px #00F5D4, 0 0 60px #70ECE4; opacity: 1; }
+            52% { text-shadow: none; opacity: 0.1; }
+            54% { text-shadow: 0 0 5px #fff, 0 0 12px #00F5D4; opacity: 0.8; }
+            58% { text-shadow: 0 0 2px #fff, 0 0 7px #00FFFF; opacity: 0.7; }
+            62% { text-shadow: 0 0 14px #fff, 0 0 30px #00F5D4, 0 0 55px #70ECE4; opacity: 1; }
+            70% { text-shadow: none; opacity: 0.05; }
+            73% { text-shadow: 0 0 6px #fff, 0 0 14px #00FFFF; opacity: 0.8; }
+            78% { text-shadow: 0 0 3px #fff, 0 0 8px #00F5D4, 0 0 18px #70ECE4; opacity: 0.9; }
+            85% { text-shadow: 0 0 8px #fff, 0 0 18px #00FFFF, 0 0 35px #00F5D4; opacity: 1; }
+            92% { text-shadow: 0 0 1px #fff; opacity: 0.4; }
+            96% { text-shadow: 0 0 12px #fff, 0 0 25px #00F5D4, 0 0 45px #00FFFF; opacity: 1; }
+            100% { text-shadow: 0 0 4px #fff, 0 0 10px #70ECE4, 0 0 20px #00F5D4; opacity: 0.95; }
+        }
+        
+        /* Ajuste para móviles */
+        @media (max-width: 700px) {
+            .footer-hcore {
+                font-size: 1.4rem;
+                letter-spacing: 0.06em;
+            }
+        }
+        
+        .mensaje-error {
+            background: #ffe6e5;
+            border-left: 6px solid #e76f51;
+            padding: 0.8rem;
+            border-radius: 1rem;
+            margin: 1rem 0;
+            color: #5a1e0e;
+        }
+        body.dark .mensaje-error {
+            background: #3e2a24;
+            color: #ffc2a1;
+        }
+        .toast-copy {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2a9d8f;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 3rem;
+            font-weight: bold;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        @media (max-width: 780px) {
+            .card { padding: 1.2rem; }
+            .estrella-item { font-size: 1.6rem; }
+            .toast-copy { white-space: normal; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="theme-toggle">
+        <button id="themeToggleBtn" class="theme-btn"><i class="fas fa-moon"></i> Modo oscuro</button>
+    </div>
+
+    <!-- ==================== PASO 0: MENÚ PRINCIPAL ==================== -->
+    <div id="step0Card" class="card">
+        <h2><i class="fas fa-futbol"></i> Balance de Equipos</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin: 2rem 0;">
+            <button id="selectTextMode" class="btn-success"><i class="fas fa-file-alt"></i> Cargar desde texto</button>
+            <button id="selectIndividualMode" class="btn-secondary"><i class="fas fa-user-plus"></i> Agregar jugador individual</button>
+        </div>
+    </div>
+
+    <!-- ==================== PASO 1A: CARGA POR TEXTO ==================== -->
+    <div id="stepTextCard" class="card" style="display: none;">
+        <h2><i class="fas fa-file-import"></i> Cargar desde texto</h2>
+        <textarea id="textoJugadores" rows="5" placeholder="Ejemplo:&#10;1. Esteban&#10;Claudio&#10;Rozas"></textarea>
+        <div class="btn-group">
+            <button id="btnProcesarTexto"><i class="fas fa-check-circle"></i> Procesar y continuar</button>
+            <button id="btnBackToMenu" class="btn-secondary"><i class="fas fa-arrow-left"></i> Volver al menú</button>
+        </div>
+    </div>
+
+    <!-- ==================== PASO 1B: CARGA INDIVIDUAL ==================== -->
+    <div id="stepIndividualCard" class="card" style="display: none;">
+        <h2><i class="fas fa-user-check"></i> Agregar jugadores uno a uno</h2>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <input type="text" id="nombreIndividual" placeholder="Nombre del jugador" style="flex: 2;">
+            <button id="btnAddIndividual"><i class="fas fa-plus-circle"></i> Agregar</button>
+        </div>
+        <div id="listaIndividualPreview" style="margin: 1.5rem 0; background: var(--pos-label-bg); border-radius: 1rem; padding: 1rem;">
+            <strong><i class="fas fa-list"></i> Jugadores cargados:</strong>
+            <ul id="listaNombresIndv"></ul>
+        </div>
+        <div class="btn-group">
+            <button id="btnFinishIndividual"><i class="fas fa-arrow-right"></i> Continuar a calificaciones</button>
+            <button id="btnBackToMenu2" class="btn-secondary"><i class="fas fa-arrow-left"></i> Volver al menú</button>
+        </div>
+    </div>
+
+    <!-- ==================== PASO 2: CALIFICACIONES Y POSICIONES ==================== -->
+    <div id="stepCalifCard" class="card" style="display: none;">
+        <h2><i class="fas fa-star-half-alt"></i> Califica y asigna posiciones</h2>
+        <div id="alertasValidacion" style="margin-bottom: 1rem;"></div>
+        <div id="listaCalificacionesContainer" class="jugadores-grid"></div>
+        <div class="btn-group">
+            <button id="btnGenerarEquiposFinal"><i class="fas fa-chalkboard-user"></i> Generar equipos balanceados</button>
+            <button id="btnBackToLoaders" class="btn-secondary"><i class="fas fa-undo-alt"></i> Atrás (cargar jugadores)</button>
+        </div>
+    </div>
+
+    <!-- ==================== PASO 3: EQUIPOS BALANCEADOS ==================== -->
+    <div id="stepEquiposCard" class="card" style="display: none;">
+        <h2><i class="fas fa-users"></i> Equipos balanceados</h2>
+        <div id="resultadoEquiposDinamico"></div>
+        <div class="btn-group">
+            <button id="btnAgregarJugadorExtra"><i class="fas fa-user-plus"></i> Agregar jugador extra</button>
+            <button id="btnRebalancear"><i class="fas fa-sync-alt"></i> Rebalancear equipos</button>
+            <button id="btnEditarCalificaciones" class="btn-edit"><i class="fas fa-edit"></i> Editar calificaciones</button>
+            <button id="btnCopiarResultado"><i class="fas fa-copy"></i> Copiar resultado</button>
+            <button id="btnInicio" class="btn-secondary"><i class="fas fa-home"></i> Inicio</button>
+        </div>
+        <div id="modalExtra" style="display: none; margin-top: 1rem; background: var(--card-bg); border-radius: 1.5rem; padding: 1rem;">
+            <input type="text" id="nombreExtra" placeholder="Nombre del nuevo jugador">
+            <button id="confirmExtra"><i class="fas fa-check"></i> Agregar y volver a calificar</button>
+            <button id="cancelExtra" class="btn-secondary">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Footer con logo animado H-CORE estilo neon terror -->
+    <div class="footer-hcore">H-CORE</div>
+    <div id="toastCopy" class="toast-copy">¡Copiado al portapapeles!</div>
+</div>
+
+<script>
+    /* ===========================
+       DECISIONES CLAVE (comentadas)
+       - 5 estrellas para calificación.
+       - Botón "De todo/Quitar todo" que alterna.
+       - Validación con scroll automático al primer jugador incompleto.
+       - 100 iteraciones aleatorias + greedy para mejor balance.
+       - Copiado robusto (textarea + execCommand) funciona en file:// y móviles.
+       - Tema claro/oscuro responsivo (detecta sistema y permite toggle manual).
+       - Botón "Editar calificaciones" para volver al paso 2 sin perder datos.
+       - Footer con logo personalizado (tipografía Creepster + animación de parpadeo terrorífico).
+    =========================== */
+
+    // ---------- ESTADO GLOBAL ----------
+    let jugadores = []; // { id, nombre, estrellas (0-5), posiciones }
+    let nextId = 1;
+    let scrollPosition = 0;
+    let ultimoResultado = null;
+
+    // ---------- FUNCIONES DE DATOS ----------
+    function parsearTextoLista(texto) {
+        return texto.split(/\r?\n/).filter(l => l.trim()).map(l => l.replace(/^[\d]+[.\-\s)]+\s*/, '').trim());
+    }
+    function agregarJugador(nombre) {
+        if (!nombre.trim()) return false;
+        jugadores.push({
+            id: nextId++,
+            nombre: nombre.trim(),
+            estrellas: 0,
+            posiciones: { arquero: false, defensa: false, central: false, delantero: false }
+        });
+        return true;
+    }
+    function limpiarJugadores() { jugadores = []; nextId = 1; }
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
+    }
+
+    // ---------- RENDER CALIFICACIONES ----------
+    function renderCalificaciones() {
+        const container = document.getElementById("listaCalificacionesContainer");
+        if (!jugadores.length) { container.innerHTML = "<p>No hay jugadores cargados.</p>"; return; }
+        const scrollDiv = document.querySelector(".jugadores-grid");
+        if (scrollDiv) scrollPosition = scrollDiv.scrollTop;
+        
+        let html = "";
+        jugadores.forEach(j => {
+            const tieneCalif = j.estrellas > 0;
+            const tienePos = (j.posiciones.arquero || j.posiciones.defensa || j.posiciones.central || j.posiciones.delantero);
+            const incompleto = (!tieneCalif || !tienePos);
+            const todasMarcadas = j.posiciones.arquero && j.posiciones.defensa && j.posiciones.central && j.posiciones.delantero;
+            const textoBotonTodo = todasMarcadas ? "Quitar todo" : "De todo";
+            
+            let starsHtml = "";
+            for (let i = 1; i <= 5; i++) {
+                const activa = (j.estrellas >= i) ? "activa" : "";
+                starsHtml += `<span class="estrella-item ${activa}" data-id="${j.id}" data-valor="${i}">★</span>`;
+            }
+            
+            html += `
+                <div class="jugador-card ${incompleto ? 'incompleto' : ''}" data-jugid="${j.id}">
+                    <div class="nombre-jugador"><i class="fas fa-user"></i> ${escapeHtml(j.nombre)}</div>
+                    <div><small>Calificación (1 a 5 estrellas):</small></div>
+                    <div class="estrellas-5" data-jugador="${j.id}">${starsHtml}</div>
+                    <div><small>Posiciones que puede jugar:</small></div>
+                    <div class="posiciones-opciones">
+                        <label><input type="checkbox" class="pos-check" data-id="${j.id}" data-pos="arquero" ${j.posiciones.arquero ? "checked" : ""}> <i class="fas fa-glove"></i> Arquero</label>
+                        <label><input type="checkbox" class="pos-check" data-id="${j.id}" data-pos="defensa" ${j.posiciones.defensa ? "checked" : ""}> <i class="fas fa-shield-alt"></i> Defensa</label>
+                        <label><input type="checkbox" class="pos-check" data-id="${j.id}" data-pos="central" ${j.posiciones.central ? "checked" : ""}> <i class="fas fa-chart-line"></i> Central</label>
+                        <label><input type="checkbox" class="pos-check" data-id="${j.id}" data-pos="delantero" ${j.posiciones.delantero ? "checked" : ""}> <i class="fas fa-bolt"></i> Delantero</label>
+                        <button class="btn-todo todo-btn" data-id="${j.id}">${textoBotonTodo}</button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+        if (scrollDiv) scrollDiv.scrollTop = scrollPosition;
+        
+        // Eventos estrellas
+        document.querySelectorAll(".estrella-item").forEach(el => {
+            el.addEventListener("click", (e) => {
+                const jugId = parseInt(el.dataset.id);
+                const valor = parseInt(el.dataset.valor);
+                const jug = jugadores.find(j => j.id === jugId);
+                if (jug) { jug.estrellas = valor; renderCalificaciones(); }
+                e.stopPropagation();
+            });
+        });
+        // Eventos checkboxes individuales
+        document.querySelectorAll(".pos-check").forEach(chk => {
+            chk.addEventListener("change", (e) => {
+                const jugId = parseInt(chk.dataset.id);
+                const posName = chk.dataset.pos;
+                const jug = jugadores.find(j => j.id === jugId);
+                if (jug) {
+                    jug.posiciones[posName] = chk.checked;
+                    renderCalificaciones(); // refresca para actualizar clase "incompleto" y botón "De todo"
+                }
+                e.stopPropagation();
+            });
+        });
+        // Eventos botón "De todo/Quitar todo"
+        document.querySelectorAll(".todo-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                const jugId = parseInt(btn.dataset.id);
+                const jug = jugadores.find(j => j.id === jugId);
+                if (jug) {
+                    const todasActuales = jug.posiciones.arquero && jug.posiciones.defensa && jug.posiciones.central && jug.posiciones.delantero;
+                    const nuevoValor = !todasActuales;
+                    jug.posiciones.arquero = nuevoValor;
+                    jug.posiciones.defensa = nuevoValor;
+                    jug.posiciones.central = nuevoValor;
+                    jug.posiciones.delantero = nuevoValor;
+                    renderCalificaciones();
+                }
+                e.stopPropagation();
+            });
+        });
+    }
+
+    // ---------- VALIDACIÓN Y SCROLL AL INCOMPLETO ----------
+    function validarYScroll() {
+        let primeroIncompleto = null;
+        for (let j of jugadores) {
+            const tieneCalif = j.estrellas > 0;
+            const tienePos = (j.posiciones.arquero || j.posiciones.defensa || j.posiciones.central || j.posiciones.delantero);
+            if (!tieneCalif || !tienePos) { primeroIncompleto = j.id; break; }
+        }
+        if (primeroIncompleto) {
+            const alertDiv = document.getElementById("alertasValidacion");
+            alertDiv.innerHTML = `<div class="mensaje-error"><i class="fas fa-exclamation-circle"></i> Hay jugadores sin calificar o sin posición. Revisa los resaltados en naranja.</div>`;
+            const elemento = document.querySelector(`.jugador-card[data-jugid="${primeroIncompleto}"]`);
+            if (elemento) {
+                elemento.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                elemento.style.transition = '0.3s';
+                elemento.style.boxShadow = '0 0 0 3px #e76f51';
+                setTimeout(() => { elemento.style.boxShadow = ''; }, 1500);
+            }
+            return false;
+        }
+        document.getElementById("alertasValidacion").innerHTML = "";
+        return true;
+    }
+
+    // ---------- ALGORITMO DE BALANCE CON MÚLTIPLES ITERACIONES ----------
+    // Genera equipos según un orden específico de jugadores
+    function generarEquiposConOrden(ordenJugadores) {
+        let disponibles = ordenJugadores.map(j => ({ ...j, posiciones: { ...j.posiciones } }));
+        let arqueros = disponibles.filter(j => j.posiciones.arquero);
+        let resto = disponibles.filter(j => !j.posiciones.arquero);
+        resto.sort((a,b) => b.estrellas - a.estrellas);
+        arqueros.sort((a,b) => b.estrellas - a.estrellas);
+        
+        let equipoA = [], equipoB = [];
+        let sumaA = 0, sumaB = 0;
+        
+        // Asignar arqueros de forma equitativa (prioridad al equipo con menor suma)
+        if (arqueros.length === 1) {
+            equipoA.push(arqueros[0]);
+            sumaA += arqueros[0].estrellas;
+        } else {
+            arqueros.forEach(arquero => {
+                if (sumaA <= sumaB) { equipoA.push(arquero); sumaA += arquero.estrellas; }
+                else { equipoB.push(arquero); sumaB += arquero.estrellas; }
+            });
+        }
+        
+        let combined = [...resto];
+        combined.sort((a,b) => b.estrellas - a.estrellas);
+        for (let jug of combined) {
+            if (sumaA <= sumaB) { equipoA.push(jug); sumaA += jug.estrellas; }
+            else { equipoB.push(jug); sumaB += jug.estrellas; }
+        }
+        
+        let promA = sumaA / equipoA.length;
+        let promB = sumaB / equipoB.length;
+        return { equipoA, equipoB, promA, promB, diff: Math.abs(promA - promB) };
+    }
+
+    // Prueba hasta 100 órdenes aleatorios y se queda con la mejor diferencia
+    function mejorDistribucionMultiple(iteraciones = 100) {
+        if (jugadores.length === 0) return null;
+        let mejor = null;
+        let mejorDiff = Infinity;
+        const jugadoresBase = jugadores.map(j => ({ ...j, posiciones: { ...j.posiciones } }));
+        for (let i = 0; i < iteraciones; i++) {
+            // Mezclar aleatoriamente el orden de los jugadores
+            const mezclados = [...jugadoresBase];
+            for (let j = mezclados.length - 1; j > 0; j--) {
+                const k = Math.floor(Math.random() * (j + 1));
+                [mezclados[j], mezclados[k]] = [mezclados[k], mezclados[j]];
+            }
+            const resultado = generarEquiposConOrden(mezclados);
+            if (resultado.diff < mejorDiff) {
+                mejorDiff = resultado.diff;
+                mejor = resultado;
+            }
+            if (mejorDiff === 0) break; // ya es perfecto
+        }
+        return mejor;
+    }
+
+    function mostrarEquipos() {
+        const result = mejorDistribucionMultiple(100);
+        if (!result) { document.getElementById("resultadoEquiposDinamico").innerHTML = "<p>Error: no hay jugadores.</p>"; return; }
+        ultimoResultado = result;
+        const { equipoA, equipoB, promA, promB, diff } = result;
+        let semaforoClass = "", textoNivel = "";
+        if (diff < 0.3) { semaforoClass = "verde"; textoNivel = "Muy parejo ✓"; }
+        else if (diff <= 0.7) { semaforoClass = "amarillo"; textoNivel = "Algo desparejo ⚠️"; }
+        else { semaforoClass = "rojo"; textoNivel = "Muy desparejo (revisar)"; }
+        
+        let html = `<div class="equipos-wrapper">
+            <div class="equipo-card"><h3><i class="fas fa-tshirt"></i> EQUIPO A</h3><ul style="list-style: none;">${equipoA.map(j => `<li><i class="fas fa-user"></i> ${escapeHtml(j.nombre)}</li>`).join('')}</ul>
+            <div class="promedio-equipo"><i class="fas fa-star"></i> Promedio: ${promA.toFixed(1)}</div></div>
+            <div class="equipo-card"><h3><i class="fas fa-tshirt"></i> EQUIPO B</h3><ul style="list-style: none;">${equipoB.map(j => `<li><i class="fas fa-user"></i> ${escapeHtml(j.nombre)}</li>`).join('')}</ul>
+            <div class="promedio-equipo"><i class="fas fa-star"></i> Promedio: ${promB.toFixed(1)}</div></div>
+        </div>
+        <div style="margin-top:1.5rem; text-align:center;">📊 Diferencia: ${diff.toFixed(2)} estrellas <span class="semaforo ${semaforoClass}"></span> (${textoNivel})</div>`;
+        document.getElementById("resultadoEquiposDinamico").innerHTML = html;
+    }
+
+    // ---------- COPIADO SIMPLIFICADO (SIN H-CORE NI FRASE FINAL) ----------
+    function copiarResultado() {
+        if (!ultimoResultado) {
+            mostrarEquipos();
+            if (!ultimoResultado) return;
+        }
+        const { equipoA, equipoB, promA, promB } = ultimoResultado;
+        let texto = "🏆 *Equipos balanceados* 🏆\n\n";
+        texto += "⚽ *EQUIPO A* (⭐ " + promA.toFixed(1) + ")\n";
+        equipoA.forEach(j => texto += `• ${j.nombre}\n`);
+        texto += "\n⚽ *EQUIPO B* (⭐ " + promB.toFixed(1) + ")\n";
+        equipoB.forEach(j => texto += `• ${j.nombre}\n`);
+        
+        // Método robusto para copiar (funciona en file://)
+        const textarea = document.createElement('textarea');
+        textarea.value = texto;
+        document.body.appendChild(textarea);
+        textarea.select();
+        textarea.setSelectionRange(0, 99999);
+        let exito = false;
+        try {
+            exito = document.execCommand('copy');
+        } catch (err) {
+            console.error('Error al copiar: ', err);
+        }
+        document.body.removeChild(textarea);
+        
+        const toast = document.getElementById("toastCopy");
+        if (exito) {
+            toast.textContent = "¡Copiado al portapapeles! ✅";
+            toast.style.opacity = "1";
+            setTimeout(() => { toast.style.opacity = "0"; setTimeout(() => { toast.textContent = "¡Copiado al portapapeles!"; }, 300); }, 2000);
+        } else {
+            toast.textContent = "Error al copiar. Copia manualmente. ❌";
+            toast.style.opacity = "1";
+            setTimeout(() => { toast.style.opacity = "0"; setTimeout(() => { toast.textContent = "¡Copiado al portapapeles!"; }, 300); }, 2000);
+            console.warn("Texto a copiar:\n", texto);
+        }
+    }
+
+    // ---------- NAVEGACIÓN ENTRE PANTALLAS ----------
+    function showStep(stepName) {
+        document.getElementById("step0Card").style.display = "none";
+        document.getElementById("stepTextCard").style.display = "none";
+        document.getElementById("stepIndividualCard").style.display = "none";
+        document.getElementById("stepCalifCard").style.display = "none";
+        document.getElementById("stepEquiposCard").style.display = "none";
+        if (stepName === "step0") document.getElementById("step0Card").style.display = "block";
+        else if (stepName === "text") document.getElementById("stepTextCard").style.display = "block";
+        else if (stepName === "individual") document.getElementById("stepIndividualCard").style.display = "block";
+        else if (stepName === "calif") { 
+            document.getElementById("stepCalifCard").style.display = "block"; 
+            renderCalificaciones(); 
+        }
+        else if (stepName === "equipos") { 
+            document.getElementById("stepEquiposCard").style.display = "block"; 
+            mostrarEquipos(); 
+        }
+    }
+
+    // ---------- TEMAS CLARO/OSCURO ----------
+    function setTheme(theme) {
+        if (theme === 'dark') document.body.classList.add('dark');
+        else document.body.classList.remove('dark');
+        localStorage.setItem('theme', theme);
+        const btn = document.getElementById('themeToggleBtn');
+        if (theme === 'dark') btn.innerHTML = '<i class="fas fa-sun"></i> Modo claro';
+        else btn.innerHTML = '<i class="fas fa-moon"></i> Modo oscuro';
+    }
+    function initTheme() {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const saved = localStorage.getItem('theme');
+        if (saved === 'dark' || (saved === null && prefersDark)) setTheme('dark');
+        else setTheme('light');
+    }
+    document.getElementById('themeToggleBtn').addEventListener('click', () => {
+        const isDark = document.body.classList.contains('dark');
+        setTheme(isDark ? 'light' : 'dark');
+    });
+
+    // ---------- EVENTOS PRINCIPALES ----------
+    document.getElementById("selectTextMode").onclick = () => showStep("text");
+    document.getElementById("selectIndividualMode").onclick = () => showStep("individual");
+    document.getElementById("btnBackToMenu").onclick = () => showStep("step0");
+    document.getElementById("btnBackToMenu2").onclick = () => showStep("step0");
+    document.getElementById("btnBackToLoaders").onclick = () => showStep("step0");
+
+    document.getElementById("btnProcesarTexto").onclick = () => {
+        const raw = document.getElementById("textoJugadores").value;
+        if (!raw.trim()) { alert("Pega una lista"); return; }
+        const nombres = parsearTextoLista(raw);
+        if (!nombres.length) return;
+        limpiarJugadores();
+        nombres.forEach(n => agregarJugador(n));
+        showStep("calif");
+    };
+    
+    function actualizarPreviewIndividual() {
+        const ul = document.getElementById("listaNombresIndv");
+        ul.innerHTML = jugadores.map(j => `<li><i class="fas fa-user-circle"></i> ${escapeHtml(j.nombre)}</li>`).join('');
+    }
+    document.getElementById("btnAddIndividual").onclick = () => {
+        const nombre = document.getElementById("nombreIndividual").value.trim();
+        if (nombre) { agregarJugador(nombre); document.getElementById("nombreIndividual").value = ""; actualizarPreviewIndividual(); }
+    };
+    document.getElementById("btnFinishIndividual").onclick = () => {
+        if (jugadores.length === 0) { alert("Agrega al menos un jugador"); return; }
+        showStep("calif");
+    };
+    
+    document.getElementById("btnGenerarEquiposFinal").onclick = () => {
+        if (validarYScroll()) showStep("equipos");
+    };
+    document.getElementById("btnRebalancear").onclick = () => { mostrarEquipos(); };
+    document.getElementById("btnEditarCalificaciones").onclick = () => { showStep("calif"); };
+    document.getElementById("btnCopiarResultado").onclick = () => { copiarResultado(); };
+    document.getElementById("btnInicio").onclick = () => { limpiarJugadores(); showStep("step0"); };
+    
+    // Modal para agregar jugador extra desde la pantalla de equipos
+    const modal = document.getElementById("modalExtra");
+    document.getElementById("btnAgregarJugadorExtra").onclick = () => { modal.style.display = "block"; };
+    document.getElementById("cancelExtra").onclick = () => { modal.style.display = "none"; };
+    document.getElementById("confirmExtra").onclick = () => {
+        const nombre = document.getElementById("nombreExtra").value.trim();
+        if (nombre) { agregarJugador(nombre); modal.style.display = "none"; document.getElementById("nombreExtra").value = ""; showStep("calif"); }
+    };
+    
+    initTheme();
+    showStep("step0");
+</script>
+</body>
+</html>
