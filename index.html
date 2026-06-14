@@ -22,11 +22,14 @@
             --jugador-border: #2c7da0;
             --incompleto-bg: #fff8f5;
             --incompleto-border: #e76f51;
-            --pos-label-bg: #f1f5f9;
+            --pos-bg-inactive: #e2e8f0;
+            --pos-bg-active: #2a9d8f;
+            --pos-text-inactive: #1e2b3c;
+            --pos-text-active: white;
             --equipo-bg: #f8fafc;
             --promedio-bg: #ffffff;
             --footer-color: #2c5a7a;
-            --btn-todo-bg: #2a9d8f;
+            --btn-todo-bg: #2c7da0;
         }
         body.dark {
             --bg-body: linear-gradient(135deg, #0a0f1a 0%, #101824 100%);
@@ -40,11 +43,14 @@
             --jugador-border: #4f9fbf;
             --incompleto-bg: #36241f;
             --incompleto-border: #e76f51;
-            --pos-label-bg: #2d3e4a;
+            --pos-bg-inactive: #334155;
+            --pos-bg-active: #2a9d8f;
+            --pos-text-inactive: #e2e8f0;
+            --pos-text-active: white;
             --equipo-bg: #1e2a32;
             --promedio-bg: #2d3e4a;
             --footer-color: #7fa5c2;
-            --btn-todo-bg: #2a9d8f;
+            --btn-todo-bg: #2c7da0;
         }
         * {
             margin: 0;
@@ -102,16 +108,14 @@
             box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15);
             transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s;
             border: 1px solid var(--border-light);
-            padding-bottom: 2rem; /* separación del borde inferior */
+            padding-bottom: 2rem;
         }
-        /* Grupos de botones responsivos */
         .btn-group {
             display: flex;
             flex-wrap: wrap;
             gap: 1rem;
             margin: 1.5rem 0 1rem;
         }
-        /* Botones generales */
         button {
             background: #2c7da0;
             border: none;
@@ -129,15 +133,12 @@
         }
         button i { font-size: 0.9rem; }
         button:hover { background: #1f5e7e; transform: scale(0.97); }
-        
-        /* Botones secundarios (retroceso, editar) más pequeños */
         .btn-secondary, .btn-back, .btn-edit {
             background: #5f7f9e;
             padding: 0.5rem 1rem;
             font-size: 0.85rem;
         }
         .btn-success { background: #2a9d8f; }
-        .btn-todo { background: var(--btn-todo-bg); padding: 0.3rem 0.8rem; font-size: 0.75rem; }
         
         textarea, input {
             width: 100%;
@@ -187,7 +188,7 @@
         }
         .estrella-item.activa { color: #f4b942; text-shadow: 0 0 3px #ffb347; }
         
-        /* Posiciones: ahora responsive sin desborde */
+        /* Posiciones: botones toggle */
         .posiciones-opciones {
             display: flex;
             flex-wrap: wrap;
@@ -195,32 +196,42 @@
             gap: 0.8rem;
             margin-top: 0.6rem;
         }
-        .posiciones-opciones label {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            background: var(--pos-label-bg);
+        .pos-btn {
+            background: var(--pos-bg-inactive);
+            color: var(--pos-text-inactive);
+            border: none;
             padding: 0.4rem 1rem;
             border-radius: 2rem;
             font-weight: 500;
             cursor: pointer;
-            white-space: nowrap;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
         }
-        /* En móviles muy pequeños, que ocupen todo el ancho */
+        .pos-btn.active {
+            background: var(--pos-bg-active);
+            color: var(--pos-text-active);
+        }
+        .btn-todo {
+            background: var(--btn-todo-bg);
+            padding: 0.4rem 1rem;
+            font-size: 0.85rem;
+            margin-left: auto;
+        }
         @media (max-width: 560px) {
             .posiciones-opciones {
                 flex-direction: column;
                 align-items: stretch;
             }
-            .posiciones-opciones label {
+            .pos-btn, .btn-todo {
                 width: 100%;
                 justify-content: center;
-                white-space: normal;
-                text-align: center;
             }
-            .posiciones-opciones .btn-todo {
-                width: 100%;
-                text-align: center;
+            .btn-todo {
+                margin-left: 0;
+                margin-top: 0.5rem;
             }
         }
         
@@ -256,13 +267,8 @@
             overflow-x: hidden;
             text-overflow: ellipsis;
         }
-        .equipo-card li i {
-            flex-shrink: 0;
-        }
-        .equipo-card li span {
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+        .equipo-card li i { flex-shrink: 0; }
+        .equipo-card li span { overflow: hidden; text-overflow: ellipsis; }
         .promedio-equipo {
             text-align: center;
             background: var(--promedio-bg);
@@ -282,7 +288,6 @@
         .amarillo { background: #f9a825; }
         .rojo { background: #d32f2f; }
         
-        /* Footer con logo neon terror */
         .footer-hcore {
             text-align: center;
             margin-top: 2rem;
@@ -366,13 +371,12 @@
 </head>
 <body>
 <div class="container">
-    <!-- Encabezado consistente en todos los pasos -->
     <div class="header-bar">
         <h1>Balance de Equipos</h1>
         <button id="themeToggleBtn" class="theme-btn"><i class="fas fa-moon"></i> Modo oscuro</button>
     </div>
 
-    <!-- ==================== PASO 0: MENÚ PRINCIPAL ==================== -->
+    <!-- PASO 0 -->
     <div id="step0Card" class="card">
         <div style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin: 2rem 0;">
             <button id="selectTextMode" class="btn-success"><i class="fas fa-file-alt"></i> Cargar desde texto</button>
@@ -380,7 +384,7 @@
         </div>
     </div>
 
-    <!-- ==================== PASO 1A: CARGA POR TEXTO ==================== -->
+    <!-- PASO 1A -->
     <div id="stepTextCard" class="card" style="display: none;">
         <textarea id="textoJugadores" rows="6" placeholder="Ejemplo:&#10;1. Esteban&#10;Claudio&#10;Rozas"></textarea>
         <div class="btn-group">
@@ -389,13 +393,13 @@
         </div>
     </div>
 
-    <!-- ==================== PASO 1B: CARGA INDIVIDUAL ==================== -->
+    <!-- PASO 1B -->
     <div id="stepIndividualCard" class="card" style="display: none;">
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
             <input type="text" id="nombreIndividual" placeholder="Nombre del jugador" style="flex: 2;">
             <button id="btnAddIndividual"><i class="fas fa-plus-circle"></i> Agregar</button>
         </div>
-        <div id="listaIndividualPreview" style="margin: 1.5rem 0; background: var(--pos-label-bg); border-radius: 1rem; padding: 1rem;">
+        <div id="listaIndividualPreview" style="margin: 1.5rem 0; background: var(--pos-bg-inactive); border-radius: 1rem; padding: 1rem;">
             <strong><i class="fas fa-list"></i> Jugadores cargados:</strong>
             <ul id="listaNombresIndv"></ul>
         </div>
@@ -405,7 +409,7 @@
         </div>
     </div>
 
-    <!-- ==================== PASO 2: CALIFICACIONES Y POSICIONES ==================== -->
+    <!-- PASO 2: CALIFICACIONES Y POSICIONES (BOTONES TOGGLE) -->
     <div id="stepCalifCard" class="card" style="display: none;">
         <div id="alertasValidacion" style="margin-bottom: 1rem;"></div>
         <div id="listaCalificacionesContainer" class="jugadores-grid"></div>
@@ -415,7 +419,7 @@
         </div>
     </div>
 
-    <!-- ==================== PASO 3: EQUIPOS BALANCEADOS ==================== -->
+    <!-- PASO 3: EQUIPOS -->
     <div id="stepEquiposCard" class="card" style="display: none;">
         <div id="resultadoEquiposDinamico"></div>
         <div class="btn-group">
@@ -432,20 +436,18 @@
         </div>
     </div>
 
-    <!-- Footer con logo animado H-CORE -->
     <div class="footer-hcore">H-CORE</div>
     <div id="toastCopy" class="toast-copy">¡Copiado al portapapeles!</div>
 </div>
 
 <script>
-    // (El código JavaScript permanece exactamente igual que en la versión anterior,
-    //  ya que los cambios son solo de CSS/estructura. Se incluye completo para que funcione)
-    // ==================== INICIO DEL SCRIPT (SIN MODIFICACIONES) ====================
+    // ---------- ESTADO GLOBAL ----------
     let jugadores = [];
     let nextId = 1;
     let scrollPosition = 0;
     let ultimoResultado = null;
 
+    // ---------- FUNCIONES AUXILIARES ----------
     function parsearTextoLista(texto) {
         return texto.split(/\r?\n/).filter(l => l.trim()).map(l => l.replace(/^[\d]+[.\-\s)]+\s*/, '').trim());
     }
@@ -463,12 +465,14 @@
     function escapeHtml(str) {
         return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
     }
-    
+
+    // ---------- RENDER CALIFICACIONES (con botones de posición toggle) ----------
     function renderCalificaciones() {
         const container = document.getElementById("listaCalificacionesContainer");
         if (!jugadores.length) { container.innerHTML = "<p>No hay jugadores cargados.</p>"; return; }
         const scrollDiv = document.querySelector(".jugadores-grid");
         if (scrollDiv) scrollPosition = scrollDiv.scrollTop;
+        
         let html = "";
         jugadores.forEach(j => {
             const tieneCalif = j.estrellas > 0;
@@ -476,11 +480,13 @@
             const incompleto = (!tieneCalif || !tienePos);
             const todasMarcadas = j.posiciones.arquero && j.posiciones.defensa && j.posiciones.central && j.posiciones.delantero;
             const textoBotonTodo = todasMarcadas ? "Quitar todo" : "De todo";
+            
             let starsHtml = "";
             for (let i = 1; i <= 5; i++) {
                 const activa = (j.estrellas >= i) ? "activa" : "";
                 starsHtml += `<span class="estrella-item ${activa}" data-id="${j.id}" data-valor="${i}">★</span>`;
             }
+            
             html += `
                 <div class="jugador-card ${incompleto ? 'incompleto' : ''}" data-jugid="${j.id}">
                     <div class="nombre-jugador"><i class="fas fa-user"></i> ${escapeHtml(j.nombre)}</div>
@@ -488,10 +494,10 @@
                     <div class="estrellas-5" data-jugador="${j.id}">${starsHtml}</div>
                     <div><small>Posiciones que puede jugar:</small></div>
                     <div class="posiciones-opciones">
-                        <label><input type="checkbox" class="pos-check" data-id="${j.id}" data-pos="arquero" ${j.posiciones.arquero ? "checked" : ""}> <i class="fas fa-glove"></i> Arquero</label>
-                        <label><input type="checkbox" class="pos-check" data-id="${j.id}" data-pos="defensa" ${j.posiciones.defensa ? "checked" : ""}> <i class="fas fa-shield-alt"></i> Defensa</label>
-                        <label><input type="checkbox" class="pos-check" data-id="${j.id}" data-pos="central" ${j.posiciones.central ? "checked" : ""}> <i class="fas fa-chart-line"></i> Central</label>
-                        <label><input type="checkbox" class="pos-check" data-id="${j.id}" data-pos="delantero" ${j.posiciones.delantero ? "checked" : ""}> <i class="fas fa-bolt"></i> Delantero</label>
+                        <button class="pos-btn ${j.posiciones.arquero ? 'active' : ''}" data-id="${j.id}" data-pos="arquero"><i class="fas fa-glove"></i> Arquero</button>
+                        <button class="pos-btn ${j.posiciones.defensa ? 'active' : ''}" data-id="${j.id}" data-pos="defensa"><i class="fas fa-shield-alt"></i> Defensa</button>
+                        <button class="pos-btn ${j.posiciones.central ? 'active' : ''}" data-id="${j.id}" data-pos="central"><i class="fas fa-chart-line"></i> Central</button>
+                        <button class="pos-btn ${j.posiciones.delantero ? 'active' : ''}" data-id="${j.id}" data-pos="delantero"><i class="fas fa-bolt"></i> Delantero</button>
                         <button class="btn-todo todo-btn" data-id="${j.id}">${textoBotonTodo}</button>
                     </div>
                 </div>
@@ -499,6 +505,8 @@
         });
         container.innerHTML = html;
         if (scrollDiv) scrollDiv.scrollTop = scrollPosition;
+        
+        // Eventos estrellas
         document.querySelectorAll(".estrella-item").forEach(el => {
             el.addEventListener("click", (e) => {
                 const jugId = parseInt(el.dataset.id);
@@ -508,18 +516,23 @@
                 e.stopPropagation();
             });
         });
-        document.querySelectorAll(".pos-check").forEach(chk => {
-            chk.addEventListener("change", (e) => {
-                const jugId = parseInt(chk.dataset.id);
-                const posName = chk.dataset.pos;
+        
+        // Eventos botones de posición (toggle)
+        document.querySelectorAll(".pos-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                const jugId = parseInt(btn.dataset.id);
+                const posName = btn.dataset.pos;
                 const jug = jugadores.find(j => j.id === jugId);
                 if (jug) {
-                    jug.posiciones[posName] = chk.checked;
+                    // Cambiar estado
+                    jug.posiciones[posName] = !jug.posiciones[posName];
                     renderCalificaciones();
                 }
                 e.stopPropagation();
             });
         });
+        
+        // Evento botón "De todo / Quitar todo"
         document.querySelectorAll(".todo-btn").forEach(btn => {
             btn.addEventListener("click", (e) => {
                 const jugId = parseInt(btn.dataset.id);
@@ -537,7 +550,8 @@
             });
         });
     }
-    
+
+    // ---------- VALIDACIÓN Y SCROLL AL INCOMPLETO ----------
     function validarYScroll() {
         let primeroIncompleto = null;
         for (let j of jugadores) {
@@ -560,7 +574,8 @@
         document.getElementById("alertasValidacion").innerHTML = "";
         return true;
     }
-    
+
+    // ---------- ALGORITMO DE BALANCE ----------
     function generarEquiposConOrden(ordenJugadores) {
         let disponibles = ordenJugadores.map(j => ({ ...j, posiciones: { ...j.posiciones } }));
         let arqueros = disponibles.filter(j => j.posiciones.arquero);
@@ -588,7 +603,7 @@
         let promB = sumaB / equipoB.length;
         return { equipoA, equipoB, promA, promB, diff: Math.abs(promA - promB) };
     }
-    
+
     function mejorDistribucionMultiple(iteraciones = 100) {
         if (jugadores.length === 0) return null;
         let mejor = null;
@@ -609,7 +624,7 @@
         }
         return mejor;
     }
-    
+
     function mostrarEquipos() {
         const result = mejorDistribucionMultiple(100);
         if (!result) { document.getElementById("resultadoEquiposDinamico").innerHTML = "<p>Error: no hay jugadores.</p>"; return; }
@@ -628,7 +643,8 @@
         <div style="margin-top:1.5rem; text-align:center;">📊 Diferencia: ${diff.toFixed(2)} estrellas <span class="semaforo ${semaforoClass}"></span> (${textoNivel})</div>`;
         document.getElementById("resultadoEquiposDinamico").innerHTML = html;
     }
-    
+
+    // ---------- COPIAR ----------
     function copiarResultado() {
         if (!ultimoResultado) {
             mostrarEquipos();
@@ -659,7 +675,8 @@
             setTimeout(() => { toast.style.opacity = "0"; setTimeout(() => { toast.textContent = "¡Copiado al portapapeles!"; }, 300); }, 2000);
         }
     }
-    
+
+    // ---------- NAVEGACIÓN ----------
     function showStep(stepName) {
         document.getElementById("step0Card").style.display = "none";
         document.getElementById("stepTextCard").style.display = "none";
@@ -672,7 +689,8 @@
         else if (stepName === "calif") { document.getElementById("stepCalifCard").style.display = "block"; renderCalificaciones(); }
         else if (stepName === "equipos") { document.getElementById("stepEquiposCard").style.display = "block"; mostrarEquipos(); }
     }
-    
+
+    // ---------- TEMAS ----------
     function setTheme(theme) {
         if (theme === 'dark') document.body.classList.add('dark');
         else document.body.classList.remove('dark');
@@ -691,7 +709,8 @@
         const isDark = document.body.classList.contains('dark');
         setTheme(isDark ? 'light' : 'dark');
     });
-    
+
+    // ---------- EVENTOS ----------
     document.getElementById("selectTextMode").onclick = () => showStep("text");
     document.getElementById("selectIndividualMode").onclick = () => showStep("individual");
     document.getElementById("btnBackToMenu").onclick = () => showStep("step0");
