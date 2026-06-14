@@ -23,13 +23,15 @@
             --incompleto-bg: #fff8f5;
             --incompleto-border: #e76f51;
             --pos-bg-inactive: #e2e8f0;
-            --pos-bg-active: #2a9d8f;
+            --pos-bg-active: #10b981;  /* verde esmeralda para posiciones activas */
             --pos-text-inactive: #1e2b3c;
             --pos-text-active: white;
             --equipo-bg: #f8fafc;
             --promedio-bg: #ffffff;
             --footer-color: #2c5a7a;
             --btn-todo-bg: #2c7da0;
+            --btn-success-bg: #10b981;  /* verde para botones especiales */
+            --btn-success-hover: #059669;
         }
         body.dark {
             --bg-body: linear-gradient(135deg, #0a0f1a 0%, #101824 100%);
@@ -44,13 +46,15 @@
             --incompleto-bg: #36241f;
             --incompleto-border: #e76f51;
             --pos-bg-inactive: #334155;
-            --pos-bg-active: #2a9d8f;
+            --pos-bg-active: #10b981;
             --pos-text-inactive: #e2e8f0;
             --pos-text-active: white;
             --equipo-bg: #1e2a32;
             --promedio-bg: #2d3e4a;
             --footer-color: #7fa5c2;
             --btn-todo-bg: #2c7da0;
+            --btn-success-bg: #10b981;
+            --btn-success-hover: #059669;
         }
         * {
             margin: 0;
@@ -138,7 +142,13 @@
             padding: 0.5rem 1rem;
             font-size: 0.85rem;
         }
-        .btn-success { background: #2a9d8f; }
+        /* Botones especiales con verde esmeralda */
+        .btn-success-custom {
+            background: var(--btn-success-bg);
+        }
+        .btn-success-custom:hover {
+            background: var(--btn-success-hover);
+        }
         
         textarea, input {
             width: 100%;
@@ -379,7 +389,7 @@
     <!-- PASO 0 -->
     <div id="step0Card" class="card">
         <div style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin: 2rem 0;">
-            <button id="selectTextMode" class="btn-success"><i class="fas fa-file-alt"></i> Cargar desde texto</button>
+            <button id="selectTextMode" class="btn-success-custom"><i class="fas fa-file-alt"></i> Cargar desde texto</button>
             <button id="selectIndividualMode" class="btn-secondary"><i class="fas fa-user-plus"></i> Agregar jugador individual</button>
         </div>
     </div>
@@ -388,7 +398,7 @@
     <div id="stepTextCard" class="card" style="display: none;">
         <textarea id="textoJugadores" rows="6" placeholder="Ejemplo:&#10;1. Esteban&#10;Claudio&#10;Rozas"></textarea>
         <div class="btn-group">
-            <button id="btnProcesarTexto"><i class="fas fa-check-circle"></i> Procesar y continuar</button>
+            <button id="btnProcesarTexto" class="btn-success-custom"><i class="fas fa-check-circle"></i> Procesar y continuar</button>
             <button id="btnBackToMenu" class="btn-secondary"><i class="fas fa-arrow-left"></i> Volver al menú</button>
         </div>
     </div>
@@ -409,12 +419,12 @@
         </div>
     </div>
 
-    <!-- PASO 2: CALIFICACIONES Y POSICIONES (BOTONES TOGGLE) -->
+    <!-- PASO 2: CALIFICACIONES Y POSICIONES -->
     <div id="stepCalifCard" class="card" style="display: none;">
         <div id="alertasValidacion" style="margin-bottom: 1rem;"></div>
         <div id="listaCalificacionesContainer" class="jugadores-grid"></div>
         <div class="btn-group">
-            <button id="btnGenerarEquiposFinal"><i class="fas fa-chalkboard-user"></i> Generar equipos balanceados</button>
+            <button id="btnGenerarEquiposFinal" class="btn-success-custom"><i class="fas fa-chalkboard-user"></i> Generar equipos balanceados</button>
             <button id="btnBackToLoaders" class="btn-secondary"><i class="fas fa-undo-alt"></i> Atrás (cargar jugadores)</button>
         </div>
     </div>
@@ -426,7 +436,7 @@
             <button id="btnAgregarJugadorExtra"><i class="fas fa-user-plus"></i> Agregar jugador extra</button>
             <button id="btnRebalancear"><i class="fas fa-sync-alt"></i> Rebalancear equipos</button>
             <button id="btnEditarCalificaciones" class="btn-edit"><i class="fas fa-edit"></i> Editar calificaciones</button>
-            <button id="btnCopiarResultado"><i class="fas fa-copy"></i> Copiar resultado</button>
+            <button id="btnCopiarResultado" class="btn-success-custom"><i class="fas fa-copy"></i> Copiar resultado</button>
             <button id="btnInicio" class="btn-secondary"><i class="fas fa-home"></i> Inicio</button>
         </div>
         <div id="modalExtra" style="display: none; margin-top: 1rem; background: var(--card-bg); border-radius: 1.5rem; padding: 1rem;">
@@ -441,6 +451,63 @@
 </div>
 
 <script>
+    // ========== LOCALSTORAGE: Guardar y cargar calificaciones de jugadores ==========
+    // Clave para guardar en localStorage
+    const STORAGE_KEY = 'hcore_jugadores_calificaciones';
+    
+    // Normaliza el nombre para usar como clave (minúsculas, sin espacios extra)
+    function normalizarNombre(nombre) {
+        return nombre.trim().toLowerCase().replace(/\s+/g, ' ');
+    }
+    
+    // Guarda un jugador en localStorage (solo si tiene calificación y al menos una posición)
+    function guardarJugadorEnStorage(jugador) {
+        if (jugador.estrellas === 0) return; // no guardar si no está calificado
+        const tienePos = (jugador.posiciones.arquero || jugador.posiciones.defensa || jugador.posiciones.central || jugador.posiciones.delantero);
+        if (!tienePos) return;
+        
+        const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        const clave = normalizarNombre(jugador.nombre);
+        stored[clave] = {
+            estrellas: jugador.estrellas,
+            posiciones: { ...jugador.posiciones }
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
+    }
+    
+    // Carga los datos de un jugador desde localStorage (si existen)
+    function cargarJugadorDesdeStorage(nombre) {
+        const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        const clave = normalizarNombre(nombre);
+        return stored[clave] || null;
+    }
+    
+    // Cuando se añade un nuevo jugador, intentar precargar desde storage
+    function precargarJugadorSiExiste(jugador) {
+        const datos = cargarJugadorDesdeStorage(jugador.nombre);
+        if (datos) {
+            jugador.estrellas = datos.estrellas;
+            jugador.posiciones = { ...datos.posiciones };
+            return true;
+        }
+        return false;
+    }
+    
+    // Función para guardar TODOS los jugadores actuales en storage (se llama cada vez que se modifica una calificación/posición)
+    function guardarTodosLosJugadores() {
+        for (let j of jugadores) {
+            guardarJugadorEnStorage(j);
+        }
+    }
+    
+    // Mostrar un toast temporal (para aviso de carga desde storage)
+    function mostrarToast(mensaje, esError = false) {
+        const toast = document.getElementById("toastCopy");
+        toast.textContent = mensaje;
+        toast.style.opacity = "1";
+        setTimeout(() => { toast.style.opacity = "0"; }, 2000);
+    }
+
     // ---------- ESTADO GLOBAL ----------
     let jugadores = [];
     let nextId = 1;
@@ -451,22 +518,32 @@
     function parsearTextoLista(texto) {
         return texto.split(/\r?\n/).filter(l => l.trim()).map(l => l.replace(/^[\d]+[.\-\s)]+\s*/, '').trim());
     }
-    function agregarJugador(nombre) {
+    
+    function agregarJugador(nombre, precargar = true) {
         if (!nombre.trim()) return false;
-        jugadores.push({
+        const nuevoJugador = {
             id: nextId++,
             nombre: nombre.trim(),
             estrellas: 0,
             posiciones: { arquero: false, defensa: false, central: false, delantero: false }
-        });
+        };
+        if (precargar) {
+            const cargado = precargarJugadorSiExiste(nuevoJugador);
+            if (cargado) {
+                mostrarToast(`📀 Datos recuperados para "${nombre.trim()}"`, false);
+            }
+        }
+        jugadores.push(nuevoJugador);
         return true;
     }
+    
     function limpiarJugadores() { jugadores = []; nextId = 1; }
+    
     function escapeHtml(str) {
         return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
     }
 
-    // ---------- RENDER CALIFICACIONES (con botones de posición toggle) ----------
+    // ---------- RENDER CALIFICACIONES (con botones toggle y autoguardado) ----------
     function renderCalificaciones() {
         const container = document.getElementById("listaCalificacionesContainer");
         if (!jugadores.length) { container.innerHTML = "<p>No hay jugadores cargados.</p>"; return; }
@@ -512,7 +589,7 @@
                 const jugId = parseInt(el.dataset.id);
                 const valor = parseInt(el.dataset.valor);
                 const jug = jugadores.find(j => j.id === jugId);
-                if (jug) { jug.estrellas = valor; renderCalificaciones(); }
+                if (jug) { jug.estrellas = valor; guardarJugadorEnStorage(jug); renderCalificaciones(); }
                 e.stopPropagation();
             });
         });
@@ -524,8 +601,8 @@
                 const posName = btn.dataset.pos;
                 const jug = jugadores.find(j => j.id === jugId);
                 if (jug) {
-                    // Cambiar estado
                     jug.posiciones[posName] = !jug.posiciones[posName];
+                    guardarJugadorEnStorage(jug);
                     renderCalificaciones();
                 }
                 e.stopPropagation();
@@ -544,6 +621,7 @@
                     jug.posiciones.defensa = nuevoValor;
                     jug.posiciones.central = nuevoValor;
                     jug.posiciones.delantero = nuevoValor;
+                    guardarJugadorEnStorage(jug);
                     renderCalificaciones();
                 }
                 e.stopPropagation();
@@ -644,7 +722,7 @@
         document.getElementById("resultadoEquiposDinamico").innerHTML = html;
     }
 
-    // ---------- COPIAR ----------
+    // ---------- COPIAR (usa el mismo toast que ahora también se usa para storage) ----------
     function copiarResultado() {
         if (!ultimoResultado) {
             mostrarEquipos();
@@ -664,15 +742,10 @@
         let exito = false;
         try { exito = document.execCommand('copy'); } catch (err) { console.error(err); }
         document.body.removeChild(textarea);
-        const toast = document.getElementById("toastCopy");
         if (exito) {
-            toast.textContent = "¡Copiado al portapapeles! ✅";
-            toast.style.opacity = "1";
-            setTimeout(() => { toast.style.opacity = "0"; setTimeout(() => { toast.textContent = "¡Copiado al portapapeles!"; }, 300); }, 2000);
+            mostrarToast("¡Copiado al portapapeles! ✅");
         } else {
-            toast.textContent = "Error al copiar. Copia manualmente. ❌";
-            toast.style.opacity = "1";
-            setTimeout(() => { toast.style.opacity = "0"; setTimeout(() => { toast.textContent = "¡Copiado al portapapeles!"; }, 300); }, 2000);
+            mostrarToast("Error al copiar. Copia manualmente. ❌", true);
         }
     }
 
@@ -716,22 +789,36 @@
     document.getElementById("btnBackToMenu").onclick = () => showStep("step0");
     document.getElementById("btnBackToMenu2").onclick = () => showStep("step0");
     document.getElementById("btnBackToLoaders").onclick = () => showStep("step0");
+    
     document.getElementById("btnProcesarTexto").onclick = () => {
         const raw = document.getElementById("textoJugadores").value;
         if (!raw.trim()) { alert("Pega una lista"); return; }
         const nombres = parsearTextoLista(raw);
         if (!nombres.length) return;
         limpiarJugadores();
-        nombres.forEach(n => agregarJugador(n));
+        let recuperados = 0;
+        nombres.forEach(n => { 
+            agregarJugador(n, true); 
+            const ultimo = jugadores[jugadores.length-1];
+            if (ultimo && ultimo.estrellas > 0) recuperados++;
+        });
+        if (recuperados > 0) {
+            mostrarToast(`💾 Se recuperaron ${recuperados} jugadores de la memoria local`);
+        }
         showStep("calif");
     };
+    
     function actualizarPreviewIndividual() {
         const ul = document.getElementById("listaNombresIndv");
         ul.innerHTML = jugadores.map(j => `<li><i class="fas fa-user-circle"></i> ${escapeHtml(j.nombre)}</li>`).join('');
     }
     document.getElementById("btnAddIndividual").onclick = () => {
         const nombre = document.getElementById("nombreIndividual").value.trim();
-        if (nombre) { agregarJugador(nombre); document.getElementById("nombreIndividual").value = ""; actualizarPreviewIndividual(); }
+        if (nombre) { 
+            agregarJugador(nombre, true); 
+            document.getElementById("nombreIndividual").value = ""; 
+            actualizarPreviewIndividual(); 
+        }
     };
     document.getElementById("btnFinishIndividual").onclick = () => {
         if (jugadores.length === 0) { alert("Agrega al menos un jugador"); return; }
@@ -744,13 +831,15 @@
     document.getElementById("btnEditarCalificaciones").onclick = () => { showStep("calif"); };
     document.getElementById("btnCopiarResultado").onclick = () => { copiarResultado(); };
     document.getElementById("btnInicio").onclick = () => { limpiarJugadores(); showStep("step0"); };
+    
     const modal = document.getElementById("modalExtra");
     document.getElementById("btnAgregarJugadorExtra").onclick = () => { modal.style.display = "block"; };
     document.getElementById("cancelExtra").onclick = () => { modal.style.display = "none"; };
     document.getElementById("confirmExtra").onclick = () => {
         const nombre = document.getElementById("nombreExtra").value.trim();
-        if (nombre) { agregarJugador(nombre); modal.style.display = "none"; document.getElementById("nombreExtra").value = ""; showStep("calif"); }
+        if (nombre) { agregarJugador(nombre, true); modal.style.display = "none"; document.getElementById("nombreExtra").value = ""; showStep("calif"); }
     };
+    
     initTheme();
     showStep("step0");
 </script>
